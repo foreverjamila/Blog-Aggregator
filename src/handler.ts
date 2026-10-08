@@ -1,5 +1,5 @@
-import { setUser } from "./config";
-import { getUserByName, createUser, deleteAllUsers } from "./lib/db/queries/users";
+import { setUser, readConfig } from "./config";
+import { getUserByName, createUser, deleteAllUsers, getUsers } from "./lib/db/queries/users";
 export async function handlerLogin(cmdName: string, ...args: string[]) {
     if (args.length === 0) {
         throw new Error("A username is required!")
@@ -33,4 +33,16 @@ export async function handlerReset(cmdName: string, ...args: string[]) {
     await deleteAllUsers();
     console.log("Database reset successfully");
 
+}
+
+export async function handlerUsers(cmdName: string, ...args: string[]) {
+    const users = await getUsers();
+    const currentUserName = readConfig().currentUserName;
+    for (const user of users) {
+        if (user.name === currentUserName) {
+            console.log(`* ${user.name} (current)`);
+        } else {
+            console.log(`* ${user.name}`);
+        }
+    }
 }
