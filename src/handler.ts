@@ -1,5 +1,7 @@
 import { setUser, readConfig } from "./config";
 import { getUserByName, createUser, deleteAllUsers, getUsers } from "./lib/db/queries/users";
+import { fetchFeed } from "./lib/rss";
+
 export async function handlerLogin(cmdName: string, ...args: string[]) {
     if (args.length === 0) {
         throw new Error("A username is required!")
@@ -45,4 +47,9 @@ export async function handlerUsers(cmdName: string, ...args: string[]) {
             console.log(`* ${user.name}`);
         }
     }
+}
+
+export async function handlerAgg(cmdName: string, ...args: string[]) {
+    const feed = await fetchFeed("https://www.wagslane.dev/index.xml");
+    console.log(JSON.stringify(feed, null, 2));
 }
