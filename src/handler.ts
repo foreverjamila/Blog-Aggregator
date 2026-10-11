@@ -5,18 +5,6 @@ import { users, type Feed, type User } from "./lib/db/schema";
 import { createFeed, getFeedByUrl, getFeedsWithUsers } from "./lib/db/queries/feeds";
 import { createFeedFollow, getFeedFollowsForUser } from "./lib/db/queries/feedFollows";
 
-async function getCurrentUser(): Promise<User> {
-    const currentUserName = readConfig().currentUserName;
-    if (currentUserName === undefined) {
-        throw new Error("no user is logged in");
-    }
-    const user = await getUserByName(currentUserName);
-    if (user === undefined) {
-        throw new Error(`user ${currentUserName} not found`);
-    }
-    return user;
-}
-
 export async function handlerLogin(cmdName: string, ...args: string[]) {
     if (args.length === 0) {
         throw new Error("A username is required!")
@@ -69,13 +57,12 @@ export async function handlerAgg(cmdName: string, ...args: string[]) {
     console.log(JSON.stringify(feed, null, 2));
 }
 
-export async function handlerAddFeed(cmdName: string, ...args: string[]) {
+export async function handlerAddFeed(cmdName: string, user: User, ...args: string[]) {
     if (args.length < 2) {
         throw new Error("usage: addfeed <name> <url>");
     };
     const feedName = args[0];
     const url = args[1];
-    const user = await getCurrentUser();
     const feed = await createFeed(feedName, url, user.id);
     printFeed(feed, user);
 
@@ -106,12 +93,11 @@ export async function handlerFeeds(cmdName: string, ...args: string[]) {
     return;
 }
 
-export async function handlerFollow(cmdName: string, ...args: string[]) {
+export async function handlerFollow(cmdName: string, user: User, ...args: string[]) {
     if (args.length < 1) {
         throw new Error("usage: follow <url>");
     }
     const url = args[0];
-    const user = await getCurrentUser();
     const feed = await getFeedByUrl(url);
     if (feed === undefined) {
         throw new Error(`feed not found: ${url}`);
@@ -120,8 +106,7 @@ export async function handlerFollow(cmdName: string, ...args: string[]) {
     console.log(`${follow.userName} is now following ${follow.feedName}`);
 }
 
-export async function handlerFollowing(cmdName: string, ...args: string[]) {
-    const user = await getCurrentUser();
+export async function handlerFollowing(cmdName: string, user: User, ...args: string[]) {
     const follows = await getFeedFollowsForUser(user.id);
     if (follows.length === 0) {
         console.log(`${user.name} is not following any feeds`);
