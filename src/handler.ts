@@ -1,8 +1,8 @@
 import { setUser, readConfig } from "./config";
 import { getUserByName, createUser, deleteAllUsers, getUsers } from "./lib/db/queries/users";
 import { fetchFeed } from "./lib/rss";
-import type { Feed, User } from "./lib/db/schema";
-import { createFeed } from "./lib/db/queries/feeds";
+import { users, type Feed, type User } from "./lib/db/schema";
+import { createFeed, getFeedsWithUsers } from "./lib/db/queries/feeds";
 
 export async function handlerLogin(cmdName: string, ...args: string[]) {
     if (args.length === 0) {
@@ -83,4 +83,17 @@ function printFeed(feed: Feed, user: User) {
     console.log(`* User: ${user.name}`);
     console.log(`* Created: ${feed.createdAt}`);
 
+}
+
+export async function handlerFeeds(cmdName: string, ...args: string[]) {
+    const feedsWithUser = await getFeedsWithUsers();
+    if (feedsWithUser.length === 0) {
+            console.log("no feeds found")
+        }
+    for (const feed of feedsWithUser) {
+        console.log(`* ${feed.feedName}`);
+        console.log(`URL: ${feed.url}`);
+        console.log(`User: ${feed.userName}`);
+    }
+    return;
 }
