@@ -1,6 +1,6 @@
 import { CommandsRegistry, registerCommand, runCommand } from "./commands";
 import { middlewareLoggedIn } from "./middleware";
-import { handlerAddFeed, handlerAgg, handlerFeeds, handlerFollow, handlerFollowing, handlerLogin, handlerRegister, handlerReset, handlerUsers } from "./handler";
+import { handlerAddFeed, handlerAgg, handlerFeeds, handlerFollow, handlerFollowing, handlerLogin, handlerRegister, handlerReset, handlerUnfollow, handlerUsers } from "./handler";
 
 async function main() {
     const registry: CommandsRegistry = {};
@@ -13,6 +13,7 @@ async function main() {
     registerCommand(registry, "feeds", handlerFeeds);
     registerCommand(registry, "follow", middlewareLoggedIn(handlerFollow));
     registerCommand(registry, "following", middlewareLoggedIn(handlerFollowing));
+    registerCommand(registry, "unfollow", middlewareLoggedIn(handlerUnfollow));
     const args = process.argv.slice(2);
     if (args.length < 1) {
         console.error("not enough arguments");

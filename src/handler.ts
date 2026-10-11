@@ -3,7 +3,7 @@ import { getUserByName, createUser, deleteAllUsers, getUsers } from "./lib/db/qu
 import { fetchFeed } from "./lib/rss";
 import { users, type Feed, type User } from "./lib/db/schema";
 import { createFeed, getFeedByUrl, getFeedsWithUsers } from "./lib/db/queries/feeds";
-import { createFeedFollow, getFeedFollowsForUser } from "./lib/db/queries/feedFollows";
+import { createFeedFollow, deleteFeedFollow, getFeedFollowsForUser } from "./lib/db/queries/feedFollows";
 
 export async function handlerLogin(cmdName: string, ...args: string[]) {
     if (args.length === 0) {
@@ -118,3 +118,19 @@ export async function handlerFollowing(cmdName: string, user: User, ...args: str
     }
 }
 
+
+export async function handlerUnfollow(cmdName: string, user: User, ...args: string[]) {
+    if (args.length < 1) {
+        throw new Error("usage: unfollow <url>");
+    }
+    const url = args[0];
+    const feed = await getFeedByUrl(url);
+    if (feed === undefined) {
+        throw new Error(`feed not found: ${url}`);
+    }
+    const deleted = await deleteFeedFollow(user.id, feed.id);
+    if (deleted.length === 0) {
+        throw new Error(`${user.name} is not following ${feed.name}`);
+    }
+    console.log(`${user.name} unfollowed ${feed.name}`);
+}
