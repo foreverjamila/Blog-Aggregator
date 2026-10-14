@@ -63,10 +63,22 @@ export async function handlerAgg(cmdName: string, ...args: string[]) {
         console.error(`Error scraping feeds: ${err instanceof Error ? err.message : err}`);
     };
 
-    scrapeFeeds().catch(handleError);
-    const interval = setInterval(() => {
-        scrapeFeeds().catch(handleError);
-    }, timeBetweenRequests);
+    // Track the scrape in progress so ticks never overlap and shutdown can wait for it.
+    let inFlight: Promise<void> | null = null;
+    const tick = () => {
+        if (inFlight !== null) {
+            console.log("Previous scrape still running, skipping this tick");
+            return;
+        }
+        inFlight = scrapeFeeds()
+            .catch(handleError)
+            .finally(() => {
+                inFlight = null;
+            });
+    };
+
+    tick();
+    const interval = setInterval(tick, timeBetweenRequests);
 
     await new Promise<void>((resolve) => {
         process.on("SIGINT", () => {
@@ -75,6 +87,11 @@ export async function handlerAgg(cmdName: string, ...args: string[]) {
             resolve();
         });
     });
+
+    if (inFlight !== null) {
+        console.log("Waiting for the current scrape to finish...");
+        await inFlight;
+    }
 }
 
 export async function handlerAddFeed(cmdName: string, user: User, ...args: string[]) {
