@@ -4,6 +4,7 @@ import { formatDuration, parseDuration, scrapeFeeds } from "./aggregate";
 import { users, type Feed, type User } from "./lib/db/schema";
 import { createFeed, getFeedByUrl, getFeedsWithUsers } from "./lib/db/queries/feeds";
 import { createFeedFollow, deleteFeedFollow, getFeedFollowsForUser } from "./lib/db/queries/feedFollows";
+import { getPostsForUser } from "./lib/db/queries/posts";
 
 export async function handlerLogin(cmdName: string, ...args: string[]) {
     if (args.length === 0) {
@@ -170,4 +171,29 @@ export async function handlerUnfollow(cmdName: string, user: User, ...args: stri
         throw new Error(`${user.name} is not following ${feed.name}`);
     }
     console.log(`${user.name} unfollowed ${feed.name}`);
+}
+
+export async function handlerBrowse(cmdName: string, user: User, ...args: string[]) {
+    let limit = 2;
+    if (args.length > 0) {
+        limit = parseInt(args[0], 10);
+        if (isNaN(limit) || limit <= 0) {
+            throw new Error(`limit must be a positive number, got: ${args[0]}`);
+        }
+    }
+
+    const posts = await getPostsForUser(user.id, limit);
+    if (posts.length === 0) {
+        console.log("No posts yet. Follow some feeds and run: agg <time_between_reqs>");
+        return;
+    }
+
+    console.log(`Latest ${posts.length} post(s) for ${user.name}:`);
+    for (const post of posts) {
+        const published = post.publishedAt ? post.publishedAt.toDateString() : "unknown date";
+        console.log("");
+        console.log(`* ${post.title}`);
+        console.log(`  ${post.feedName} | ${published}`);
+        console.log(`  ${post.url}`);
+    }
 }
